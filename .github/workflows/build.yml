@@ -4,8 +4,8 @@ name: Build
 on:
   workflow_run:
     workflows: [Quality check]
-    types:
-      - completed
+    types: [completed]
+
   push:
     branches: [ "master" ]
   pull_request:
