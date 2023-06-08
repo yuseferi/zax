@@ -18,9 +18,17 @@ when you add something to context and would like to carry with context , you jus
 
     ctx = zax.Set(ctx, logger, []zap.Field{zap.String("trace_id", "my-trace-id")})
 
-and when you want to log context fields, just use    
+and when you want to get logger with contexted fields, just use    
         
     zax.Get(ctx)
+
+after that you will be able to use the output as usual logger and do
+
+```Go
+zax.Get(ctx).Info(....)
+zax.Get(ctx).Debug(....)
+.....
+```
 
 
 
@@ -54,7 +62,7 @@ func (s *ServiceA) funcA(ctx context.Context) {
 ```
 
 ### Contributing
-I strongly believe in open-source :), feel free to make it better with raising issues and PRs.
+I strongly believe in open-source :), feel free to make it better with raising issues and PRs. ❤️😊
 
 
 Released under the [GNU GENERAL PUBLIC LICENSE](LICENSE).
