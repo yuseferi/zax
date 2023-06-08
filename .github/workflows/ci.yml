@@ -25,6 +25,10 @@ jobs:
           version: v1.53.2
       - name: Tests
         run: go mod download; go test -race ./...
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+            CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   build:
     runs-on: ubuntu-latest
     steps:
