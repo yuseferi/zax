@@ -1,0 +1,47 @@
+run:
+  deadline: 5m
+  issues-exit-code: 1
+  skip-dirs:
+    - docs
+    - mocks
+    - scripts
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters-settings:
+  dupl:
+    threshold: 250
+  lll:
+    line-length: 160
+  goconst:
+    min-len:         2
+    min-occurrences: 3
+  errcheck:
+    exclude-functions:
+      - (io.Closer).Close
+  cyclop:
+    max-complexity: 10
+  funlen:
+    lines: 50
+
+linters:
+  disable-all: true
+  enable:
+    - dupl
+    - errcheck
+    - goconst
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - funlen
+    - cyclop
+    - lll
+    - forbidigo
+
