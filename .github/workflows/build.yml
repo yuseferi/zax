@@ -3,7 +3,7 @@
 name: Build
 on:
   workflow_run:
-    workflows: [ Quality check ]
+    workflows: [Quality check]
     types:
       - completed
   push:
