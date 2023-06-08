@@ -24,7 +24,7 @@ jobs:
         with:
           version: v1.53.2
       - name: Tests
-        run: go mod download; go test -race ./...
+        run: go mod download; go test -cover -coverprofile=./unit-cover.txt -race ./...
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         env:
