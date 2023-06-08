@@ -1,4 +1,4 @@
-module zax
+module github.com/yuseferi/zax
 
 go 1.20
 
