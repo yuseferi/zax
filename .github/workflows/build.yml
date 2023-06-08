@@ -6,7 +6,10 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-
+  workflow_run:
+    workflows: [Quality check]
+    types:
+      - completed
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,3 +22,5 @@ jobs:
         uses: actions/setup-go@v4
       - name: Build
         run: go mod download; go build -v ./...
+        with:
+          fail_ci_if_error: true
