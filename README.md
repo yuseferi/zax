@@ -2,6 +2,8 @@
 [![codecov](https://codecov.io/github/yuseferi/zax/branch/codecov-integration/graph/badge.svg?token=64IHXT3ROF)](https://codecov.io/github/yuseferi/zax)
 [![CodeQL](https://github.com/yuseferi/zax/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/yuseferi/zax/actions/workflows/github-code-scanning/codeql)
 [![Check & Build](https://github.com/yuseferi/zax/actions/workflows/ci.yml/badge.svg)](https://github.com/yuseferi/zax/actions/workflows/ci.yml)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/yuseferi/zax)
 
 Basically this adds context to [Zap Logger](https://github.com/uber-go/zap), and make it easier to for the Gophers to do not generate logger boiler plates.
 Passing logger as a parameter to function increase parameters functionalities and worse than couple lots of methods with a explicit dependency.
