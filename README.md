@@ -5,9 +5,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/yuseferi/zax)
 
-Basically this adds context to [Zap Logger](https://github.com/uber-go/zap), and make it easier to for the Gophers to do not generate logger boiler plates.
-Passing logger as a parameter to function increase parameters functionalities and worse than couple lots of methods with a explicit dependency.
-
+Zax is a library that adds context to [Zap Logger](https://github.com/uber-go/zap) and makes it easier for Gophers to avoid generating logger boilerplates. By passing the logger as a parameter to functions, it enhances parameter functionality and avoids the need for multiple methods with explicit dependencies.
 
 ### Installation
 
@@ -16,15 +14,15 @@ Passing logger as a parameter to function increase parameters functionalities an
 ```
 
 ### Usage:
-when you add something to context and would like to carry with context , you just need to add it to context with calling `zap.Set`
+To add something to the context and carry it along, simply use zap.Set:
 
     ctx = zax.Set(ctx, logger, []zap.Field{zap.String("trace_id", "my-trace-id")})
 
-and when you want to get logger with contexted fields, just use    
-        
+To retrieve a logger with the contexted fields, use zax.Get:
+
     zax.Get(ctx)
 
-after that you will be able to use the output as usual logger and do
+After that, you can use the output as a regular logger and perform logging operations:
 
 ```Go
 zax.Get(ctx).Info(....)
@@ -35,7 +33,7 @@ zax.Get(ctx).Debug(....)
 
 
 ##### example:
-you want to generate a tracer on entry point of your system and want to keep it until the process finished.
+Let's say you want to generate a tracer at the entry point of your system and keep it until the process finishes:
 
 ```Go
 func main() {
@@ -62,9 +60,24 @@ func (s *ServiceA) funcA(ctx context.Context) {
 }
 
 ```
+### benchmark
+We have benchmarked Zax against Zap using the same fields. Here are the benchmark results:
+
+```
+BenchmarkLoggingWithOnlyZap-10          31756287                34.97 ns/op
+BenchmarkLoggingWithOnlyZap-10          35056582                35.06 ns/op
+BenchmarkLoggingWithOnlyZap-10          32982284                35.90 ns/op
+BenchmarkLoggingWithOnlyZap-10          35061405                34.95 ns/op
+BenchmarkLoggingWithOnlyZap-10          33266068                34.86 ns/op
+BenchmarkLoggingWithZax-10              18442729                64.53 ns/op
+BenchmarkLoggingWithZax-10              18592747                65.57 ns/op
+BenchmarkLoggingWithZax-10              17492030                65.26 ns/op
+BenchmarkLoggingWithZax-10              18640606                64.66 ns/op
+BenchmarkLoggingWithZax-10              18700837                64.58 ns/op
+```
 
 ### Contributing
-I strongly believe in open-source :), feel free to make it better with raising issues and PRs. ❤️😊
+We strongly believe in open-source ❤️😊. Please feel free to contribute by raising issues and submitting pull requests to make Zax even better!
 
 
 Released under the [GNU GENERAL PUBLIC LICENSE](LICENSE).
