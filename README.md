@@ -5,6 +5,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/yuseferi/zax)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yuseferi/zax)](https://goreportcard.com/report/github.com/yuseferi/zax)
+
 Zax is a library that adds context to [Zap Logger](https://github.com/uber-go/zap) and makes it easier for Gophers to avoid generating logger boilerplates. By passing the logger as a parameter to functions, it enhances parameter functionality and avoids the need for multiple methods with explicit dependencies.
 
 ### Installation
