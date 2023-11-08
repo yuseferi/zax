@@ -41,7 +41,9 @@ func main() {
     logger, _ := zap.NewProduction()
     ctx := context.Background()
     s := NewServiceA(logger)
-    ctx = zax.Set(ctx, logger, []zap.Field{zap.String("trace_id", "my-trace-id")})
+	ctx = zax.Set(ctx, logger, zap.String("trace_id", "my-trace-id"))
+	// and if you want to add multiple of them at once
+	//ctx = zax.Set(ctx, logger, []zap.Field{zap.String("trace_id", "my-trace-id"),zap.String("span_id", "my-span-id")})
     s.funcA(ctx)
 }
 
