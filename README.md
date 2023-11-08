@@ -17,7 +17,7 @@ Zax is a library that adds context to [Zap Logger](https://github.com/uber-go/za
 ### Usage:
 To add something to the context and carry it along, simply use zap.Set:
 
-    ctx = zax.Set(ctx, logger, []zap.Field{zap.String("trace_id", "my-trace-id")})
+    ctx = zax.Set(ctx, logger, zap.String("trace_id", "my-trace-id"))
 
 To retrieve a logger with the contexted fields, use zax.Get:
 
@@ -41,9 +41,9 @@ func main() {
     logger, _ := zap.NewProduction()
     ctx := context.Background()
     s := NewServiceA(logger)
-	ctx = zax.Set(ctx, logger, zap.String("trace_id", "my-trace-id"))
-	// and if you want to add multiple of them at once
-	//ctx = zax.Set(ctx, logger, []zap.Field{zap.String("trace_id", "my-trace-id"),zap.String("span_id", "my-span-id")})
+    ctx = zax.Set(ctx, logger, zap.String("trace_id", "my-trace-id"))  
+    // and if you want to add multiple of them at once
+    //ctx = zax.Set(ctx, logger, []zap.Field{zap.String("trace_id", "my-trace-id"),zap.String("span_id", "my-span-id")})
     s.funcA(ctx)
 }
 
