@@ -11,24 +11,28 @@ Zax is a library that adds context to [Zap Logger](https://github.com/uber-go/za
 ### Installation
 
 ```shell
-  go get -u github.com/yuseferi/zax
+  go get -u github.com/yuseferi/zax/v2
 ```
 
 ### Usage:
 To add something to the context and carry it along, simply use zap.Set:
 
-    ctx = zax.Set(ctx, logger, zap.String("trace_id", "my-trace-id"))
+    ctx = zax.Set(ctx, []zap.Field{zap.String("trace_id", "my-trace-id")})
 
-To retrieve a logger with the contexted fields, use zax.Get:
+To retrieve stored zap fields in context, use zax.Get:
 
-    zax.Get(ctx)
+     zax.Get(ctx)  // this retrive stored zap fields in context 
+
+To retrieve stored zap fields in context and log them :
+
+     logger.With(zax.Get(ctx)...).Info("just a test record")
+
 
 After that, you can use the output as a regular logger and perform logging operations:
 
 ```Go
-zax.Get(ctx).Info(....)
-zax.Get(ctx).Debug(....)
-.....
+logger.With(zax.Get(ctx)...).Info("message")
+logger.With(zax.Get(ctx)...).Debug("message")
 ```
 
 
@@ -41,9 +45,9 @@ func main() {
     logger, _ := zap.NewProduction()
     ctx := context.Background()
     s := NewServiceA(logger)
-    ctx = zax.Set(ctx, logger, zap.String("trace_id", "my-trace-id"))  
+    ctx = zax.Set(ctx, zap.String("trace_id", "my-trace-id"))  
     // and if you want to add multiple of them at once
-    //ctx = zax.Set(ctx, logger, []zap.Field{zap.String("trace_id", "my-trace-id"),zap.String("span_id", "my-span-id")})
+    //ctx = zax.Set(ctx, []zap.Field{zap.String("trace_id", "my-trace-id"),zap.String("span_id", "my-span-id")})
     s.funcA(ctx)
 }
 
@@ -59,7 +63,7 @@ func NewServiceA(logger *zap.Logger) *ServiceA {
 
 func (s *ServiceA) funcA(ctx context.Context) {
     s.logger.Info("func A") // it does not contain trace_id, you need to add it manually
-    zax.Get(ctx).Info("func A") // it will logged with "trace_id" = "my-trace-id"
+	s.logger.With(zax.Get(ctx)...).Info("func A") // it will logged with "trace_id" = "my-trace-id"
 }
 
 ```
@@ -67,16 +71,18 @@ func (s *ServiceA) funcA(ctx context.Context) {
 We have benchmarked Zax against Zap using the same fields. Here are the benchmark results:
 
 ```
-BenchmarkLoggingWithOnlyZap-10          31756287                34.97 ns/op
-BenchmarkLoggingWithOnlyZap-10          35056582                35.06 ns/op
-BenchmarkLoggingWithOnlyZap-10          32982284                35.90 ns/op
-BenchmarkLoggingWithOnlyZap-10          35061405                34.95 ns/op
-BenchmarkLoggingWithOnlyZap-10          33266068                34.86 ns/op
-BenchmarkLoggingWithZax-10              18442729                64.53 ns/op
-BenchmarkLoggingWithZax-10              18592747                65.57 ns/op
-BenchmarkLoggingWithZax-10              17492030                65.26 ns/op
-BenchmarkLoggingWithZax-10              18640606                64.66 ns/op
-BenchmarkLoggingWithZax-10              18700837                64.58 ns/op
+pkg: github.com/yuseferi/zax/v2
+BenchmarkLoggingWithOnlyZap-10          344718321               35.23 ns/op
+BenchmarkLoggingWithOnlyZap-10          340526908               36.74 ns/op
+BenchmarkLoggingWithOnlyZap-10          337279976               36.17 ns/op
+BenchmarkLoggingWithOnlyZap-10          338681052               36.18 ns/op
+BenchmarkLoggingWithOnlyZap-10          339414484               35.48 ns/op
+BenchmarkLoggingWithZax-10              201602071               56.58 ns/op
+BenchmarkLoggingWithZax-10              213688218               57.44 ns/op
+BenchmarkLoggingWithZax-10              206059045               56.66 ns/op
+BenchmarkLoggingWithZax-10              211847756               58.14 ns/op
+BenchmarkLoggingWithZax-10              210184916               56.69 ns/op
+
 ```
 
 ### Contributing
