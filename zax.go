@@ -15,6 +15,9 @@ const loggerKey = Key("zax")
 
 // Set Add passed fields in context
 func Set(ctx context.Context, fields []zap.Field) context.Context {
+	if loggerFields, ok := ctx.Value(loggerKey).([]zap.Field); ok {
+		fields = append(fields, loggerFields...)
+	}
 	return context.WithValue(ctx, loggerKey, fields)
 }
 
