@@ -2,9 +2,10 @@ package zax
 
 import (
 	"context"
+	"testing"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"testing"
 )
 
 var someFields = []zap.Field{
@@ -19,8 +20,8 @@ func LogWithZap(logger *zap.Logger) {
 
 func LogWithZax(logger *zap.Logger) {
 	ctx := context.Background()
-	Set(ctx, logger, someFields)
-	Get(ctx).Info("logging something")
+	Set(ctx, someFields)
+	logger.With(Get(ctx)...).Info("logging something")
 }
 
 func BenchmarkLoggingWithOnlyZap(b *testing.B) {

@@ -43,6 +43,9 @@ func (l *Logger) AssertLogEntryExist(t assert.TestingT, key, value string) bool 
 			}
 		}
 	}
+	if key == "" && value == "" {
+		return true
+	}
 	return assert.Fail(t, fmt.Sprintf("log entry does not exist with, %s = %s", key, value))
 }
 
@@ -69,13 +72,18 @@ func TestSet(t *testing.T) {
 		expectedLoggerKey   string
 		expectedLoggerValue string
 	}{
+		"context for zax filed is empty": {
+			context:             Set(ctx, nil),
+			expectedLoggerKey:   "",
+			expectedLoggerValue: "",
+		},
 		"context with trace-id": {
-			context:             Set(ctx, testLog.logger, []zap.Field{zap.String(traceIDKey, testTraceID)}),
+			context:             Set(ctx, []zap.Field{zap.String(traceIDKey, testTraceID)}),
 			expectedLoggerKey:   traceIDKey,
 			expectedLoggerValue: testTraceID,
 		},
 		"context with trace-id with new value(to check it will be updated)": {
-			context:             Set(ctx, testLog.logger, []zap.Field{zap.String(traceIDKey, testTraceID2)}),
+			context:             Set(ctx, []zap.Field{zap.String(traceIDKey, testTraceID2)}),
 			expectedLoggerKey:   traceIDKey,
 			expectedLoggerValue: testTraceID2,
 		},
@@ -84,7 +92,7 @@ func TestSet(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			ctx := tc.context
-			logger := ctx.Value(loggerKey).(*zap.Logger)
+			logger := testLog.logger.With(Get(ctx)...)
 			logger.Info("just a test record")
 			assert.NotNil(t, logger)
 			testLog.AssertLogEntryExist(t, tc.expectedLoggerKey, tc.expectedLoggerValue)
@@ -101,12 +109,12 @@ func TestGet(t *testing.T) {
 		context           context.Context
 		expectedLoggerKey *string
 	}{
-		"context with trace-id": {
+		"context empty": {
 			context:           context.TODO(),
 			expectedLoggerKey: nil,
 		},
-		"context with trace-id with new value(to check it will be updated)": {
-			context:           Set(ctx, testLog.logger, []zap.Field{zap.String(traceIDKey, testTraceID)}),
+		"context with trace-id field": {
+			context:           Set(ctx, []zap.Field{zap.String(traceIDKey, testTraceID)}),
 			expectedLoggerKey: &traceIDKey,
 		},
 	}
@@ -114,7 +122,7 @@ func TestGet(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			ctx := tc.context
-			Get(ctx).Info("just a test record")
+			testLog.logger.With(Get(ctx)...).Info("just a test record")
 			if tc.expectedLoggerKey != nil {
 				testLog.AssertLogEntryKeyExist(t, *tc.expectedLoggerKey)
 			}

@@ -4,26 +4,24 @@ package zax
 
 import (
 	"context"
+
 	"go.uber.org/zap"
 )
 
 type Key string
 
-// Key name which used for save logger in context
+// Key name which used for save fields in context
 const loggerKey = Key("zax")
 
-// Set Add passed fields to logger and store zap.Logger as variable in context
-func Set(ctx context.Context, logger *zap.Logger, fields []zap.Field) context.Context {
-	if len(fields) > 0 {
-		logger = logger.With(fields...)
-	}
-	return context.WithValue(ctx, loggerKey, logger)
+// Set Add passed fields in context
+func Set(ctx context.Context, fields []zap.Field) context.Context {
+	return context.WithValue(ctx, loggerKey, fields)
 }
 
-// Get zap.Logger from context
-func Get(ctx context.Context) *zap.Logger {
-	if logger, ok := ctx.Value(loggerKey).(*zap.Logger); ok {
-		return logger
+// Get zap stored fields from context
+func Get(ctx context.Context) []zap.Field {
+	if loggerFields, ok := ctx.Value(loggerKey).([]zap.Field); ok {
+		return loggerFields
 	}
-	return zap.L()
+	return nil
 }
