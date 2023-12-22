@@ -61,6 +61,7 @@ func (l *Logger) AssertLogEntryKeyExist(t assert.TestingT, key string) bool {
 }
 
 const traceIDKey = "trace_id"
+const spanIDKey = "span_id"
 
 func TestSet(t *testing.T) {
 	testLog := NewLogger(t)
@@ -96,6 +97,37 @@ func TestSet(t *testing.T) {
 			logger.Info("just a test record")
 			assert.NotNil(t, logger)
 			testLog.AssertLogEntryExist(t, tc.expectedLoggerKey, tc.expectedLoggerValue)
+		})
+	}
+}
+
+func TestAppend(t *testing.T) {
+	testLog := NewLogger(t)
+	testTraceID := "test-trace-id-3333"
+	ctx := context.Background()
+	ctx = Set(ctx, []zap.Field{zap.String(traceIDKey, testTraceID)})
+	tests := map[string]struct {
+		context             context.Context
+		expectedFieldNumber int
+	}{
+		"context for zax filed is empty": {
+			context:             Append(ctx, nil),
+			expectedFieldNumber: 1,
+		},
+		"context with appending span-id": {
+			context:             Append(ctx, []zap.Field{zap.String(spanIDKey, testTraceID)}),
+			expectedFieldNumber: 2,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctx := tc.context
+			logger := testLog.logger.With(Get(ctx)...)
+			logger.Info("just a test record")
+			assert.NotNil(t, logger)
+			assert.Equal(t, tc.expectedFieldNumber, len(Get(ctx)))
+
 		})
 	}
 }
