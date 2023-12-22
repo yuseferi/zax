@@ -15,6 +15,12 @@ const loggerKey = Key("zax")
 
 // Set Add passed fields in context
 func Set(ctx context.Context, fields []zap.Field) context.Context {
+	return context.WithValue(ctx, loggerKey, fields)
+}
+
+// Append  appending passed fields to the existing fields in context.
+// it's recommended to use Append when you want to append some fields and do not lose the already added fields to context.
+func Append(ctx context.Context, fields []zap.Field) context.Context {
 	if loggerFields, ok := ctx.Value(loggerKey).([]zap.Field); ok {
 		fields = append(fields, loggerFields...)
 	}
