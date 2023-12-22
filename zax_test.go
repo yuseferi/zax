@@ -60,12 +60,15 @@ func (l *Logger) AssertLogEntryKeyExist(t assert.TestingT, key string) bool {
 	return assert.Fail(t, fmt.Sprintf("log entry does not exist with key = %s ", key))
 }
 
-const traceIDKey = "trace_id"
-const spanIDKey = "span_id"
+const (
+	traceIDKey  = "trace_id"
+	spanIDKey   = "span_id"
+	testTraceID = "test-trace-id-3333"
+)
 
 func TestSet(t *testing.T) {
 	testLog := NewLogger(t)
-	testTraceID := "test-trace-id-3333"
+
 	testTraceID2 := "test-trace-id-new"
 	ctx := context.Background()
 	tests := map[string]struct {
@@ -103,7 +106,6 @@ func TestSet(t *testing.T) {
 
 func TestAppend(t *testing.T) {
 	testLog := NewLogger(t)
-	testTraceID := "test-trace-id-3333"
 	ctx := context.Background()
 	ctx = Set(ctx, []zap.Field{zap.String(traceIDKey, testTraceID)})
 	tests := map[string]struct {
@@ -134,7 +136,6 @@ func TestAppend(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	testLog := NewLogger(t)
-	testTraceID := "test-trace-id-3333"
 	traceIDKey := traceIDKey
 	ctx := context.Background()
 	tests := map[string]struct {
