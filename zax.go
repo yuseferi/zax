@@ -34,3 +34,15 @@ func Get(ctx context.Context) []zap.Field {
 	}
 	return nil
 }
+
+// GetField Get a specific zap stored field from context by key
+func GetField(ctx context.Context, key string) (field zap.Field) {
+	if loggerFields, ok := ctx.Value(loggerKey).([]zap.Field); ok {
+		for _, field := range loggerFields {
+			if field.Key == key {
+				return field
+			}
+		}
+	}
+	return
+}
