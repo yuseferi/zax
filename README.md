@@ -27,6 +27,9 @@ To retrieve stored zap fields in context and log them :
 
      logger.With(zax.Get(ctx)...).Info("just a test record")
 
+To retrieve an specific field in the context you can use zax.GetField:
+
+     zax.GetField(ctx, "trace_id")
 
 After that, you can use the output as a regular logger and perform logging operations:
 

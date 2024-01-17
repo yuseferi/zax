@@ -162,3 +162,28 @@ func TestGet(t *testing.T) {
 		})
 	}
 }
+func TestGetField(t *testing.T) {
+	traceIDKey := traceIDKey
+	ctx := context.Background()
+	tests := map[string]struct {
+		context       context.Context
+		expectedValue string
+	}{
+		"context empty": {
+			context:       context.TODO(),
+			expectedValue: "",
+		},
+		"context with trace-id field": {
+			context:       Set(ctx, []zap.Field{zap.String(traceIDKey, testTraceID)}),
+			expectedValue: testTraceID,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctx := tc.context
+			field := GetField(ctx, traceIDKey)
+			assert.Equal(t, tc.expectedValue, field.String)
+		})
+	}
+}
