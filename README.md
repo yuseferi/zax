@@ -27,6 +27,9 @@ To retrieve stored zap fields in context and log them :
 
      logger.With(zax.Get(ctx)...).Info("just a test record")
 
+To retrieve an specific field in the context you can use zax.GetField:
+
+     zax.GetField(ctx, "trace_id")
 
 After that, you can use the output as a regular logger and perform logging operations:
 
@@ -68,20 +71,28 @@ func (s *ServiceA) funcA(ctx context.Context) {
 
 ```
 ### benchmark
-We have benchmarked Zax against Zap using the same fields. Here are the benchmark results:
-
+We have benchmarked Zax V2,V1 and Zap using the same fields. Here are the benchmark results:
+As you can see in **V2** (Method with storing only fields in context, has better performance than V1 ( storing the whole logger object in context))
 ```
 pkg: github.com/yuseferi/zax/v2
-BenchmarkLoggingWithOnlyZap-10          344718321               35.23 ns/op
-BenchmarkLoggingWithOnlyZap-10          340526908               36.74 ns/op
-BenchmarkLoggingWithOnlyZap-10          337279976               36.17 ns/op
-BenchmarkLoggingWithOnlyZap-10          338681052               36.18 ns/op
-BenchmarkLoggingWithOnlyZap-10          339414484               35.48 ns/op
-BenchmarkLoggingWithZax-10              201602071               56.58 ns/op
-BenchmarkLoggingWithZax-10              213688218               57.44 ns/op
-BenchmarkLoggingWithZax-10              206059045               56.66 ns/op
-BenchmarkLoggingWithZax-10              211847756               58.14 ns/op
-BenchmarkLoggingWithZax-10              210184916               56.69 ns/op
+BenchmarkLoggingWithOnlyZap-10          103801226               35.56 ns/op          112 B/op          1 allocs/op
+BenchmarkLoggingWithOnlyZap-10          98576570                35.56 ns/op          112 B/op          1 allocs/op
+BenchmarkLoggingWithOnlyZap-10          100000000               35.24 ns/op          112 B/op          1 allocs/op
+BenchmarkLoggingWithOnlyZap-10          100000000               34.85 ns/op          112 B/op          1 allocs/op
+BenchmarkLoggingWithOnlyZap-10          100000000               34.98 ns/op          112 B/op          1 allocs/op
+BenchmarkLoggingWithZaxV2-10            64324434                56.02 ns/op           72 B/op          2 allocs/op
+BenchmarkLoggingWithZaxV2-10            63939517                56.98 ns/op           72 B/op          2 allocs/op
+BenchmarkLoggingWithZaxV2-10            63374052                57.60 ns/op           72 B/op          2 allocs/op
+BenchmarkLoggingWithZaxV2-10            63417358                57.37 ns/op           72 B/op          2 allocs/op
+BenchmarkLoggingWithZaxV2-10            57964246                57.97 ns/op           72 B/op          2 allocs/op
+BenchmarkLoggingWithZaxV1-10            54062712                66.40 ns/op          160 B/op          2 allocs/op
+BenchmarkLoggingWithZaxV1-10            53155524                65.61 ns/op          160 B/op          2 allocs/op
+BenchmarkLoggingWithZaxV1-10            54428521                64.19 ns/op          160 B/op          2 allocs/op
+BenchmarkLoggingWithZaxV1-10            55420744                64.28 ns/op          160 B/op          2 allocs/op
+BenchmarkLoggingWithZaxV1-10            55199061                64.50 ns/op          160 B/op          2 allocs/op
+PASS
+ok      github.com/yuseferi/zax/v2      56.919s
+
 
 ```
 

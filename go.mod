@@ -3,8 +3,8 @@ module github.com/yuseferi/zax/v2
 go 1.21
 
 require (
-	github.com/stretchr/testify v1.8.4
-	go.uber.org/zap v1.26.0
+	github.com/stretchr/testify v1.9.0
+	go.uber.org/zap v1.27.0
 )
 
 require (
