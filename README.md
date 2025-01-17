@@ -1,17 +1,15 @@
 # Zax (zap with context)
-[![codecov](https://codecov.io/github/yuseferi/zax/branch/codecov-integration/graph/badge.svg?token=64IHXT3ROF)](https://codecov.io/github/yuseferi/zax)
-[![CodeQL](https://github.com/yuseferi/zax/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/yuseferi/zax/actions/workflows/github-code-scanning/codeql)
-[![Check & Build](https://github.com/yuseferi/zax/actions/workflows/ci.yml/badge.svg)](https://github.com/yuseferi/zax/actions/workflows/ci.yml)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/yuseferi/zax)
-[![Go Report Card](https://goreportcard.com/badge/github.com/yuseferi/zax)](https://goreportcard.com/report/github.com/yuseferi/zax)
+[![CodeQL](https://github.com/deliveryhero/zax/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/deliveryhero/zax/actions/workflows/github-code-scanning/codeql)
+[![Check & Build](https://github.com/deliveryhero/zax/actions/workflows/ci.yml/badge.svg)](https://github.com/deliveryhero/zax/actions/workflows/ci.yml)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/deliveryhero/zax)
+
 
 Zax is a library that adds context to [Zap Logger](https://github.com/uber-go/zap) and makes it easier for Gophers to avoid generating logger boilerplates. By passing the logger as a parameter to functions, it enhances parameter functionality and avoids the need for multiple methods with explicit dependencies.
 
 ### Installation
 
 ```shell
-  go get -u github.com/yuseferi/zax/v2
+  go get -u github.com/deliveryhero/zax/v2
 ```
 
 ### Usage:
@@ -74,7 +72,7 @@ func (s *ServiceA) funcA(ctx context.Context) {
 We have benchmarked Zax V2,V1 and Zap using the same fields. Here are the benchmark results:
 As you can see in **V2** (Method with storing only fields in context, has better performance than V1 ( storing the whole logger object in context))
 ```
-pkg: github.com/yuseferi/zax/v2
+pkg: github.com/deliveryhero/zax/v2
 BenchmarkLoggingWithOnlyZap-10          103801226               35.56 ns/op          112 B/op          1 allocs/op
 BenchmarkLoggingWithOnlyZap-10          98576570                35.56 ns/op          112 B/op          1 allocs/op
 BenchmarkLoggingWithOnlyZap-10          100000000               35.24 ns/op          112 B/op          1 allocs/op
@@ -91,17 +89,10 @@ BenchmarkLoggingWithZaxV1-10            54428521                64.19 ns/op     
 BenchmarkLoggingWithZaxV1-10            55420744                64.28 ns/op          160 B/op          2 allocs/op
 BenchmarkLoggingWithZaxV1-10            55199061                64.50 ns/op          160 B/op          2 allocs/op
 PASS
-ok      github.com/yuseferi/zax/v2      56.919s
+ok      github.com/deliveryhero/zax/v2      56.919s
 
 
 ```
-
-### Contributing
-We strongly believe in open-source ❤️😊. Please feel free to contribute by raising issues and submitting pull requests to make Zax even better!
-
-
-Released under the [GNU GENERAL PUBLIC LICENSE](LICENSE).
-
 
 
 

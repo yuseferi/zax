@@ -32,13 +32,3 @@ jobs:
             uses: actions/setup-go@v4
           - name: Run tests
             run: go mod download; go test -cover -coverprofile=./unit-cover.txt -race ./...
-          - name: Upload coverage reports to Codecov
-            uses: codecov/codecov-action@v3
-            env:
-                CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-            with:
-              files: ./unit-cover.txt
-              flags: unittests
-              name: codecov-umbrella
-              fail_ci_if_error: true
-              verbose: true

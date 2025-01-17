@@ -1,4 +1,4 @@
-module github.com/yuseferi/zax/v2
+module github.com/deliveryhero/zax/v2
 
 go 1.21
 
