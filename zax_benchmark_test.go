@@ -20,7 +20,7 @@ func LogWithZap(logger *zap.Logger) {
 
 func LogWithZax(logger *zap.Logger) {
 	ctx := context.Background()
-	Set(ctx, someFields)
+	ctx = Set(ctx, someFields)
 	logger.With(Get(ctx)...).Info("logging something")
 }
 
