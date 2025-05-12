@@ -4,7 +4,6 @@ package zax
 
 import (
 	"context"
-
 	"go.uber.org/zap"
 )
 
@@ -45,4 +44,15 @@ func GetField(ctx context.Context, key string) (field zap.Field) {
 		}
 	}
 	return
+}
+
+// GetSugared converts zap.Fields stored in context to key-value pairs
+// compatible with zap.SugaredLogger.With(...).
+func GetSugared(ctx context.Context) []interface{} {
+	fields := Get(ctx)
+	var kv []interface{}
+	for _, f := range fields {
+		kv = append(kv, f.Key, f.Interface)
+	}
+	return kv
 }
