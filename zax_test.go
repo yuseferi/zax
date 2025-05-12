@@ -94,13 +94,15 @@ func TestSet(t *testing.T) {
 	}
 
 	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			ctx := tc.context
-			logger := testLog.logger.With(Get(ctx)...)
-			logger.Info("just a test record")
-			assert.NotNil(t, logger)
-			testLog.AssertLogEntryExist(t, tc.expectedLoggerKey, tc.expectedLoggerValue)
-		})
+		t.Run(
+			name, func(t *testing.T) {
+				ctx := tc.context
+				logger := testLog.logger.With(Get(ctx)...)
+				logger.Info("just a test record")
+				assert.NotNil(t, logger)
+				testLog.AssertLogEntryExist(t, tc.expectedLoggerKey, tc.expectedLoggerValue)
+			},
+		)
 	}
 }
 
@@ -123,14 +125,16 @@ func TestAppend(t *testing.T) {
 	}
 
 	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			ctx := tc.context
-			logger := testLog.logger.With(Get(ctx)...)
-			logger.Info("just a test record")
-			assert.NotNil(t, logger)
-			assert.Equal(t, tc.expectedFieldNumber, len(Get(ctx)))
+		t.Run(
+			name, func(t *testing.T) {
+				ctx := tc.context
+				logger := testLog.logger.With(Get(ctx)...)
+				logger.Info("just a test record")
+				assert.NotNil(t, logger)
+				assert.Equal(t, tc.expectedFieldNumber, len(Get(ctx)))
 
-		})
+			},
+		)
 	}
 }
 
@@ -153,15 +157,51 @@ func TestGet(t *testing.T) {
 	}
 
 	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			ctx := tc.context
-			testLog.logger.With(Get(ctx)...).Info("just a test record")
-			if tc.expectedLoggerKey != nil {
-				testLog.AssertLogEntryKeyExist(t, *tc.expectedLoggerKey)
-			}
-		})
+		t.Run(
+			name, func(t *testing.T) {
+				ctx := tc.context
+				testLog.logger.With(Get(ctx)...).Info("just a test record")
+				if tc.expectedLoggerKey != nil {
+					testLog.AssertLogEntryKeyExist(t, *tc.expectedLoggerKey)
+				}
+			},
+		)
 	}
 }
+
+func TestGetSugared(t *testing.T) {
+	testLog := NewLogger(t)
+	sugar := testLog.logger.Sugar()
+
+	traceIDKey := traceIDKey
+	ctx := context.Background()
+	tests := map[string]struct {
+		context           context.Context
+		expectedLoggerKey *string
+	}{
+		"context empty": {
+			context:           context.TODO(),
+			expectedLoggerKey: nil,
+		},
+		"context with trace-id field": {
+			context:           Set(ctx, []zap.Field{zap.String(traceIDKey, testTraceID)}),
+			expectedLoggerKey: &traceIDKey,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(
+			name, func(t *testing.T) {
+				ctx := tc.context
+				sugar.With(GetSugared(ctx)...).Info("just a test record")
+				if tc.expectedLoggerKey != nil {
+					testLog.AssertLogEntryKeyExist(t, *tc.expectedLoggerKey)
+				}
+			},
+		)
+	}
+}
+
 func TestGetField(t *testing.T) {
 	traceIDKey := traceIDKey
 	ctx := context.Background()
@@ -180,10 +220,12 @@ func TestGetField(t *testing.T) {
 	}
 
 	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			ctx := tc.context
-			field := GetField(ctx, traceIDKey)
-			assert.Equal(t, tc.expectedValue, field.String)
-		})
+		t.Run(
+			name, func(t *testing.T) {
+				ctx := tc.context
+				field := GetField(ctx, traceIDKey)
+				assert.Equal(t, tc.expectedValue, field.String)
+			},
+		)
 	}
 }
