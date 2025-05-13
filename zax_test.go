@@ -193,9 +193,10 @@ func TestGetSugared(t *testing.T) {
 		t.Run(
 			name, func(t *testing.T) {
 				ctx := tc.context
-				sugar.With(GetSugared(ctx)...).Info("just a test record")
+				sugar.With(GetSugared(ctx)...).Errorf("just a test record")
 				if tc.expectedLoggerKey != nil {
 					testLog.AssertLogEntryKeyExist(t, *tc.expectedLoggerKey)
+					testLog.AssertLogEntryExist(t, *tc.expectedLoggerKey, testTraceID)
 				}
 			},
 		)
