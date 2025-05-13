@@ -68,8 +68,9 @@ func (s *ServiceA) funcA(ctx context.Context) {
     s.logger.Info("func A") // it does not contain trace_id, you need to add it manually
 	s.logger.With(zax.Get(ctx)...).Info("func A") // it will logged with "trace_id" = "my-trace-id"
 }
-
 ```
+
+
 ### benchmark
 We have benchmarked Zax V2,V1 and Zap using the same fields. Here are the benchmark results:
 As you can see in **V2** (Method with storing only fields in context, has better performance than V1 ( storing the whole logger object in context))
