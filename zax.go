@@ -5,6 +5,7 @@ package zax
 import (
 	"context"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type Key string
@@ -48,11 +49,29 @@ func GetField(ctx context.Context, key string) (field zap.Field) {
 
 // GetSugared converts zap.Fields stored in context to key-value pairs
 // compatible with zap.SugaredLogger.With(...).
+// beat in Mind in Sugar version it's limited to String, Bool, Int, Error and Interface.
 func GetSugared(ctx context.Context) []interface{} {
 	fields := Get(ctx)
 	var kv []interface{}
+
 	for _, f := range fields {
-		kv = append(kv, f.Key, f.Interface)
+		switch f.Type {
+		case zapcore.StringType:
+			kv = append(kv, f.Key, f.String)
+		case zapcore.BoolType:
+			kv = append(kv, f.Key, f.Integer == 1)
+		case zapcore.Int64Type, zapcore.Uint64Type:
+			kv = append(kv, f.Key, f.Integer)
+		case zapcore.ErrorType:
+			if err, ok := f.Interface.(error); ok {
+				kv = append(kv, f.Key, err)
+			}
+		default:
+			// fallback to Interface, if it exists
+			if f.Interface != nil {
+				kv = append(kv, f.Key, f.Interface)
+			}
+		}
 	}
 	return kv
 }

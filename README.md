@@ -246,6 +246,14 @@ Zax V2 is optimized for performance. Here's how it compares:
 <details>
 <summary>📋 Full Benchmark Results</summary>
 
+
+```
+
+
+### benchmark
+We have benchmarked Zax V2,V1 and Zap using the same fields. Here are the benchmark results:
+As you can see in **V2** (Method with storing only fields in context, has better performance than V1 ( storing the whole logger object in context))
+
 ```
 pkg: github.com/yuseferi/zax/v2
 BenchmarkLoggingWithOnlyZap-10          103801226               35.56 ns/op          112 B/op          1 allocs/op
