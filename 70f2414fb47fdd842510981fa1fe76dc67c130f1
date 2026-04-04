@@ -1,0 +1,36 @@
+README.md
+  deb00c9cb5e2045b 23,63-84
+.github/workflows/ci.yml
+  deb00c9cb5e2045b 26,42
+unit-cover.txt
+  deb00c9cb5e2045b 1-23
+.github/workflows/build.yml
+  deb00c9cb5e2045b 27
+zax.go
+  deb00c9cb5e2045b 22-23
+Taskfile.yml
+  deb00c9cb5e2045b 1-59
+.golangci.yaml
+  deb00c9cb5e2045b 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "70f2414fb47fdd842510981fa1fe76dc67c130f1",
+  "prompts": {
+    "deb00c9cb5e2045b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d5a74-e29b-73b0-99d1-1292295e7333",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Yusef Mohamadi",
+      "messages": [],
+      "total_additions": 113,
+      "total_deletions": 8,
+      "accepted_lines": 113,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/38c837d7e3d0b192bf387bb0e472eb707393583cfe5d7a5b73ac1771fbe83b59"
+    }
+  }
+}
