@@ -152,6 +152,15 @@ func TestAppendPreservesExistingOrder(t *testing.T) {
 	assert.Equal(t, "new-span-id", fields[1].String)
 }
 
+func TestAppendOnEmptyContext(t *testing.T) {
+	ctx := Append(context.Background(), []zap.Field{zap.String(spanIDKey, "first-span-id")})
+
+	fields := Get(ctx)
+	assert.Len(t, fields, 1)
+	assert.Equal(t, spanIDKey, fields[0].Key)
+	assert.Equal(t, "first-span-id", fields[0].String)
+}
+
 func TestGet(t *testing.T) {
 	testLog := NewLogger(t)
 	traceIDKey := traceIDKey
