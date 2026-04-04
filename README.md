@@ -4,7 +4,7 @@
 
 ### Context-Aware Logging for Go with Uber's Zap
 
-[![Go Version](https://img.shields.io/badge/Go-%3E%3D%201.21-00ADD8?style=flat-square&logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-%3E%3D%201.26.1-00ADD8?style=flat-square&logo=go)](https://go.dev/)
 [![Go Reference](https://pkg.go.dev/badge/github.com/yuseferi/zax/v2.svg)](https://pkg.go.dev/github.com/yuseferi/zax/v2)
 [![codecov](https://img.shields.io/codecov/c/github/yuseferi/zax?style=flat-square&logo=codecov)](https://codecov.io/github/yuseferi/zax)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yuseferi/zax?style=flat-square)](https://goreportcard.com/report/github.com/yuseferi/zax)
@@ -20,6 +20,7 @@
 
 [Features](#-features) •
 [Installation](#-installation) •
+[Tasks](#-tasks) •
 [Quick Start](#-quick-start) •
 [API Reference](#-api-reference) •
 [Benchmarks](#-benchmarks) •
@@ -46,7 +47,7 @@ Zax solves these problems elegantly by storing Zap fields in context, making the
 |---------|-------------|
 | 🚀 **Zero Dependencies** | Only requires `go.uber.org/zap` |
 | 🎯 **Context-Native** | Works seamlessly with Go's `context.Context` |
-| ⚡ **High Performance** | Minimal overhead (~20ns per operation) |
+| ⚡ **High Performance** | Small overhead over direct Zap usage |
 | 🔧 **Simple API** | Just 5 functions to learn |
 | 🍬 **SugaredLogger Support** | Works with both `*zap.Logger` and `*zap.SugaredLogger` |
 | 🧪 **Well Tested** | Comprehensive test coverage |
@@ -57,7 +58,30 @@ Zax solves these problems elegantly by storing Zap fields in context, making the
 go get -u github.com/yuseferi/zax/v2
 ```
 
-**Requirements:** Go 1.21 or higher
+**Requirements:** Go 1.26.1 or higher
+
+## 🛠 Tasks
+
+This project uses [Task](https://taskfile.dev/) to keep local commands and CI in sync.
+
+Install Task:
+
+```bash
+go run github.com/go-task/task/v3/cmd/task@latest --version
+```
+
+Common commands:
+
+```bash
+task build
+task test
+task test:race
+task lint
+task bench
+task ci
+```
+
+`task ci` runs the same lint and test flow used by GitHub Actions.
 
 ## 🚀 Quick Start
 
@@ -135,6 +159,8 @@ ctx = zax.Append(ctx, []zap.Field{
 // Now has: trace_id + span_id
 ```
 
+When the same key is added multiple times, later fields follow Zap's normal behavior and take precedence at log time.
+
 #### `Get(ctx) []zap.Field`
 Retrieves all stored fields from context.
 
@@ -158,6 +184,25 @@ Returns fields as key-value pairs for `SugaredLogger`.
 sugar := logger.Sugar()
 sugar.With(zax.GetSugared(ctx)...).Info("sugared log")
 ```
+
+`GetSugared` converts fields through Zap's encoder so common field types like strings, bools, numbers, errors, durations, and times are preserved.
+
+## 📊 Benchmarks
+
+Run benchmarks with:
+
+```bash
+go test -bench . -run '^$' ./...
+```
+
+Example output on an Apple M2 Pro:
+
+```text
+BenchmarkLoggingWithOnlyZap-10    28372430    44.73 ns/op
+BenchmarkLoggingWithZax-10        10809844   118.1 ns/op
+```
+
+This keeps the package lightweight while adding a modest per-call cost for carrying context fields.
 
 ## 🔥 Real-World Example
 

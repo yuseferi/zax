@@ -1,0 +1,59 @@
+version: '3'
+
+vars:
+  GO_VERSION: 1.26.1
+  GOLANGCI_LINT_VERSION: v2.1.6
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  download:
+    desc: Download Go module dependencies
+    cmds:
+      - go mod download
+
+  tidy:
+    desc: Tidy Go modules
+    cmds:
+      - go mod tidy
+
+  build:
+    desc: Build the project
+    deps: [download]
+    cmds:
+      - go build -v ./...
+
+  test:
+    desc: Run tests
+    deps: [download]
+    cmds:
+      - go test ./...
+
+  test:race:
+    desc: Run tests with race detector and coverage
+    deps: [download]
+    cmds:
+      - go test -cover -coverprofile=./unit-cover.txt -race ./...
+
+  bench:
+    desc: Run benchmarks
+    deps: [download]
+    cmds:
+      - go test -bench . -run '^$' ./...
+
+  lint:
+    desc: Run golangci-lint
+    env:
+      GOCACHE: /tmp/gocache
+      GOLANGCI_LINT_CACHE: /tmp/golangci-lint-cache
+    cmds:
+      - go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}} run
+
+  ci:
+    desc: Run local CI checks
+    cmds:
+      - task: lint
+      - task: test:race
