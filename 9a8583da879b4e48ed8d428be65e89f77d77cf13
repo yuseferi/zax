@@ -1,0 +1,24 @@
+zax_test.go
+  deb00c9cb5e2045b 155-163
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "9a8583da879b4e48ed8d428be65e89f77d77cf13",
+  "prompts": {
+    "deb00c9cb5e2045b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d5a74-e29b-73b0-99d1-1292295e7333",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Yusef Mohamadi",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 7,
+      "accepted_lines": 9,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/08ef14f05ed310b24921c30746e77ab8b1e1808f714e0e49f857a8ff9aaab3a7"
+    }
+  }
+}
