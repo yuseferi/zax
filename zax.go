@@ -4,6 +4,7 @@ package zax
 
 import (
 	"context"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -15,22 +16,28 @@ const loggerKey = Key("zax")
 
 // Set Add passed fields in context
 func Set(ctx context.Context, fields []zap.Field) context.Context {
-	return context.WithValue(ctx, loggerKey, fields)
+	return context.WithValue(ctx, loggerKey, cloneFields(fields))
 }
 
 // Append  appending passed fields to the existing fields in context.
 // it's recommended to use Append when you want to append some fields and do not lose the already added fields to context.
 func Append(ctx context.Context, fields []zap.Field) context.Context {
-	if loggerFields, ok := ctx.Value(loggerKey).([]zap.Field); ok {
-		fields = append(fields, loggerFields...)
+	loggerFields := Get(ctx)
+	if len(loggerFields) == 0 {
+		return context.WithValue(ctx, loggerKey, cloneFields(fields))
 	}
-	return context.WithValue(ctx, loggerKey, fields)
+
+	appended := make([]zap.Field, 0, len(loggerFields)+len(fields))
+	appended = append(appended, loggerFields...)
+	appended = append(appended, fields...)
+
+	return context.WithValue(ctx, loggerKey, appended)
 }
 
 // Get zap stored fields from context
 func Get(ctx context.Context) []zap.Field {
 	if loggerFields, ok := ctx.Value(loggerKey).([]zap.Field); ok {
-		return loggerFields
+		return cloneFields(loggerFields)
 	}
 	return nil
 }
@@ -49,29 +56,35 @@ func GetField(ctx context.Context, key string) (field zap.Field) {
 
 // GetSugared converts zap.Fields stored in context to key-value pairs
 // compatible with zap.SugaredLogger.With(...).
-// beat in Mind in Sugar version it's limited to String, Bool, Int, Error and Interface.
+// It converts fields using Zap's encoder behavior to preserve values across field types.
 func GetSugared(ctx context.Context) []interface{} {
 	fields := Get(ctx)
 	var kv []interface{}
 
 	for _, f := range fields {
-		switch f.Type {
-		case zapcore.StringType:
-			kv = append(kv, f.Key, f.String)
-		case zapcore.BoolType:
-			kv = append(kv, f.Key, f.Integer == 1)
-		case zapcore.Int64Type, zapcore.Uint64Type:
-			kv = append(kv, f.Key, f.Integer)
-		case zapcore.ErrorType:
+		if f.Type == zapcore.ErrorType {
 			if err, ok := f.Interface.(error); ok {
 				kv = append(kv, f.Key, err)
+				continue
 			}
-		default:
-			// fallback to Interface, if it exists
-			if f.Interface != nil {
-				kv = append(kv, f.Key, f.Interface)
-			}
+		}
+
+		encoder := zapcore.NewMapObjectEncoder()
+		f.AddTo(encoder)
+		if value, ok := encoder.Fields[f.Key]; ok {
+			kv = append(kv, f.Key, value)
 		}
 	}
 	return kv
+}
+
+func cloneFields(fields []zap.Field) []zap.Field {
+	if len(fields) == 0 {
+		return nil
+	}
+
+	cloned := make([]zap.Field, len(fields))
+	copy(cloned, fields)
+
+	return cloned
 }

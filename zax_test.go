@@ -2,6 +2,7 @@ package zax
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -138,6 +139,19 @@ func TestAppend(t *testing.T) {
 	}
 }
 
+func TestAppendPreservesExistingOrder(t *testing.T) {
+	ctx := context.Background()
+	ctx = Set(ctx, []zap.Field{zap.String(traceIDKey, testTraceID)})
+	ctx = Append(ctx, []zap.Field{zap.String(spanIDKey, "new-span-id")})
+
+	fields := Get(ctx)
+	assert.Len(t, fields, 2)
+	assert.Equal(t, traceIDKey, fields[0].Key)
+	assert.Equal(t, testTraceID, fields[0].String)
+	assert.Equal(t, spanIDKey, fields[1].Key)
+	assert.Equal(t, "new-span-id", fields[1].String)
+}
+
 func TestGet(t *testing.T) {
 	testLog := NewLogger(t)
 	traceIDKey := traceIDKey
@@ -167,6 +181,16 @@ func TestGet(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestGetReturnsClonedFields(t *testing.T) {
+	ctx := Set(context.Background(), []zap.Field{zap.String(traceIDKey, testTraceID)})
+
+	fields := Get(ctx)
+	fields[0] = zap.String(traceIDKey, "mutated")
+
+	original := Get(ctx)
+	assert.Equal(t, testTraceID, original[0].String)
 }
 
 func TestGetSugared(t *testing.T) {
@@ -201,6 +225,34 @@ func TestGetSugared(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestGetSugaredSupportsCommonTypes(t *testing.T) {
+	testErr := errors.New("boom")
+	ctx := Set(context.Background(), []zap.Field{
+		zap.String("trace_id", testTraceID),
+		zap.Bool("sampled", true),
+		zap.Int("attempt", 2),
+		zap.Error(testErr),
+	})
+
+	values := GetSugared(ctx)
+	assert.Equal(t, []interface{}{
+		"trace_id", testTraceID,
+		"sampled", true,
+		"attempt", int64(2),
+		"error", testErr,
+	}, values)
+}
+
+func TestSetClonesInputFields(t *testing.T) {
+	fields := []zap.Field{zap.String(traceIDKey, testTraceID)}
+	ctx := Set(context.Background(), fields)
+
+	fields[0] = zap.String(traceIDKey, "mutated")
+
+	stored := Get(ctx)
+	assert.Equal(t, testTraceID, stored[0].String)
 }
 
 func TestGetField(t *testing.T) {
