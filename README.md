@@ -21,6 +21,7 @@
 [Features](#-features) •
 [Installation](#-installation) •
 [Tasks](#-tasks) •
+[Releases](#-releases) •
 [Quick Start](#-quick-start) •
 [API Reference](#-api-reference) •
 [Benchmarks](#-benchmarks) •
@@ -82,6 +83,24 @@ task ci
 ```
 
 `task ci` runs the same lint and test flow used by GitHub Actions.
+
+## 🚀 Releases
+
+This project uses [semantic-release](https://github.com/semantic-release/semantic-release) to automate Git tags and GitHub releases.
+
+Release automation is configured in `.releaserc.json` and runs from [release.yml](air-file://u79a3iqojmlbgidgjj5v/Users/yusef.mohamadi/devdesktop/zax/.github/workflows/release.yml?type=file&root=%252F) after the `Quality check` workflow succeeds on `master`.
+
+Use Conventional Commits so semantic-release can determine the next version:
+
+- `fix:` for patch releases
+- `feat:` for minor releases
+- `feat!:` or a `BREAKING CHANGE:` footer for major releases
+
+You can preview the next release locally with:
+
+```bash
+task release:dry-run
+```
 
 ## 🚀 Quick Start
 

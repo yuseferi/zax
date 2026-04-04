@@ -3,6 +3,7 @@ version: '3'
 vars:
   GO_VERSION: 1.26.1
   GOLANGCI_LINT_VERSION: v2.1.6
+  SEMANTIC_RELEASE_VERSION: 25.0.2
 
 tasks:
   default:
@@ -57,3 +58,8 @@ tasks:
     cmds:
       - task: lint
       - task: test:race
+
+  release:dry-run:
+    desc: Run semantic-release in dry-run mode
+    cmds:
+      - npx -y semantic-release@{{.SEMANTIC_RELEASE_VERSION}} --dry-run
