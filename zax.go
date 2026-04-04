@@ -19,8 +19,8 @@ func Set(ctx context.Context, fields []zap.Field) context.Context {
 	return context.WithValue(ctx, loggerKey, cloneFields(fields))
 }
 
-// Append  appending passed fields to the existing fields in context.
-// it's recommended to use Append when you want to append some fields and do not lose the already added fields to context.
+// Append appends passed fields to the existing fields in context.
+// It is recommended when you want to add fields without losing existing ones.
 func Append(ctx context.Context, fields []zap.Field) context.Context {
 	loggerFields := Get(ctx)
 	if len(loggerFields) == 0 {

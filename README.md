@@ -20,6 +20,7 @@
 
 [Features](#-features) •
 [Installation](#-installation) •
+[Tasks](#-tasks) •
 [Quick Start](#-quick-start) •
 [API Reference](#-api-reference) •
 [Benchmarks](#-benchmarks) •
@@ -58,6 +59,29 @@ go get -u github.com/yuseferi/zax/v2
 ```
 
 **Requirements:** Go 1.26.1 or higher
+
+## 🛠 Tasks
+
+This project uses [Task](https://taskfile.dev/) to keep local commands and CI in sync.
+
+Install Task:
+
+```bash
+go run github.com/go-task/task/v3/cmd/task@latest --version
+```
+
+Common commands:
+
+```bash
+task build
+task test
+task test:race
+task lint
+task bench
+task ci
+```
+
+`task ci` runs the same lint and test flow used by GitHub Actions.
 
 ## 🚀 Quick Start
 

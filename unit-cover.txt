@@ -1,0 +1,23 @@
+mode: atomic
+github.com/yuseferi/zax/v2/zax.go:18.67,20.2 1 11
+github.com/yuseferi/zax/v2/zax.go:24.70,26.28 2 3
+github.com/yuseferi/zax/v2/zax.go:26.28,28.3 1 0
+github.com/yuseferi/zax/v2/zax.go:30.2,34.52 4 3
+github.com/yuseferi/zax/v2/zax.go:38.43,39.64 1 19
+github.com/yuseferi/zax/v2/zax.go:39.64,41.3 1 17
+github.com/yuseferi/zax/v2/zax.go:42.2,42.12 1 2
+github.com/yuseferi/zax/v2/zax.go:46.66,47.64 1 2
+github.com/yuseferi/zax/v2/zax.go:47.64,48.38 1 1
+github.com/yuseferi/zax/v2/zax.go:48.38,49.24 1 1
+github.com/yuseferi/zax/v2/zax.go:49.24,51.5 1 1
+github.com/yuseferi/zax/v2/zax.go:54.2,54.8 1 1
+github.com/yuseferi/zax/v2/zax.go:60.52,64.27 3 3
+github.com/yuseferi/zax/v2/zax.go:64.27,65.34 1 5
+github.com/yuseferi/zax/v2/zax.go:65.34,66.42 1 1
+github.com/yuseferi/zax/v2/zax.go:66.42,68.13 2 1
+github.com/yuseferi/zax/v2/zax.go:72.3,74.45 3 4
+github.com/yuseferi/zax/v2/zax.go:74.45,76.4 1 4
+github.com/yuseferi/zax/v2/zax.go:78.2,78.11 1 3
+github.com/yuseferi/zax/v2/zax.go:81.50,82.22 1 28
+github.com/yuseferi/zax/v2/zax.go:82.22,84.3 1 2
+github.com/yuseferi/zax/v2/zax.go:86.2,89.15 3 26
