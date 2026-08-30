@@ -31,7 +31,7 @@ func BenchmarkLoggingWithOnlyZap(b *testing.B) {
 		return zapcore.NewNopCore()
 	}))
 
-	for i := 1; i <= b.N; i++ {
+	for b.Loop() {
 		LogWithZap(logger)
 	}
 }
@@ -43,7 +43,7 @@ func BenchmarkLoggingWithZax(b *testing.B) {
 		return zapcore.NewNopCore()
 	}))
 
-	for i := 1; i <= b.N; i++ {
+	for b.Loop() {
 		LogWithZax(logger)
 	}
 }

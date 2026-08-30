@@ -246,7 +246,7 @@ func TestGetSugaredSupportsCommonTypes(t *testing.T) {
 	})
 
 	values := GetSugared(ctx)
-	assert.Equal(t, []interface{}{
+	assert.Equal(t, []any{
 		"trace_id", testTraceID,
 		"sampled", true,
 		"attempt", int64(2),
@@ -290,4 +290,56 @@ func TestGetField(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestLookupField(t *testing.T) {
+	ctx := Set(context.Background(), []zap.Field{
+		zap.String(traceIDKey, testTraceID),
+		zap.Int("attempt", 0),
+	})
+
+	field, ok := LookupField(ctx, traceIDKey)
+	assert.True(t, ok)
+	assert.Equal(t, testTraceID, field.String)
+
+	// A zero-valued field that exists must still report found=true,
+	// which GetField alone cannot express.
+	field, ok = LookupField(ctx, "attempt")
+	assert.True(t, ok)
+	assert.Equal(t, int64(0), field.Integer)
+
+	_, ok = LookupField(ctx, "missing")
+	assert.False(t, ok)
+
+	_, ok = LookupField(context.Background(), traceIDKey)
+	assert.False(t, ok)
+}
+
+func TestRemove(t *testing.T) {
+	ctx := Set(context.Background(), []zap.Field{
+		zap.String(traceIDKey, testTraceID),
+		zap.String(spanIDKey, "span-1"),
+		zap.String("user_email", "user@example.com"),
+	})
+
+	// Remove a single key, e.g. PII before passing the context on.
+	ctx = Remove(ctx, "user_email")
+	fields := Get(ctx)
+	assert.Len(t, fields, 2)
+	_, found := LookupField(ctx, "user_email")
+	assert.False(t, found)
+
+	// Remove multiple keys at once.
+	ctx = Remove(ctx, spanIDKey, traceIDKey)
+	assert.Empty(t, Get(ctx))
+}
+
+func TestRemoveReturnsSameContextWhenKeysAbsent(t *testing.T) {
+	ctx := Set(context.Background(), []zap.Field{zap.String(traceIDKey, testTraceID)})
+
+	assert.True(t, ctx == Remove(ctx, "missing"))
+	assert.True(t, ctx == Remove(ctx))
+
+	emptyCtx := context.Background()
+	assert.True(t, emptyCtx == Remove(emptyCtx, traceIDKey))
 }

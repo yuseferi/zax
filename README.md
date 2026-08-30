@@ -48,8 +48,8 @@ Zax solves these problems elegantly by storing Zap fields in context, making the
 |---------|-------------|
 | 🚀 **Zero Dependencies** | Only requires `go.uber.org/zap` |
 | 🎯 **Context-Native** | Works seamlessly with Go's `context.Context` |
-| ⚡ **High Performance** | Small overhead over direct Zap usage |
-| 🔧 **Simple API** | Just 5 functions to learn |
+| ⚡ **High Performance** | Minimal, predictable overhead (see [Benchmarks](#-benchmarks)) |
+| 🔧 **Simple API** | Just 7 functions to learn |
 | 🍬 **SugaredLogger Support** | Works with both `*zap.Logger` and `*zap.SugaredLogger` |
 | 🧪 **Well Tested** | Comprehensive test coverage |
 
@@ -88,7 +88,7 @@ task ci
 
 This project uses [semantic-release](https://github.com/semantic-release/semantic-release) to automate Git tags and GitHub releases.
 
-Release automation is configured in `.releaserc.json` and runs from [release.yml](air-file://u79a3iqojmlbgidgjj5v/Users/yusef.mohamadi/devdesktop/zax/.github/workflows/release.yml?type=file&root=%252F) after the `Quality check` workflow succeeds on `master`.
+Release automation is configured in `.releaserc.json` and runs from [.github/workflows/release.yml](.github/workflows/release.yml) after the `Quality check` workflow succeeds on `master`.
 
 Use Conventional Commits so semantic-release can determine the next version:
 
@@ -189,14 +189,32 @@ logger.With(fields...).Info("message")
 ```
 
 #### `GetField(ctx, key) zap.Field`
-Retrieves a specific field by key.
+Retrieves a specific field by key. Returns the zero-value `zap.Field` when the key is not present.
 
 ```go
 traceField := zax.GetField(ctx, "trace_id")
 fmt.Println(traceField.String) // "my-trace-id"
 ```
 
-#### `GetSugared(ctx) []interface{}`
+#### `LookupField(ctx, key) (zap.Field, bool)`
+Like `GetField`, but also reports whether the key was found — useful when a
+stored field may legitimately hold a zero value.
+
+```go
+if field, ok := zax.LookupField(ctx, "attempt"); ok {
+    fmt.Println(field.Integer)
+}
+```
+
+#### `Remove(ctx, keys...) context.Context`
+Returns a context with the given keys removed from the stored fields.
+Handy for scrubbing sensitive data (e.g. PII) before passing a context on.
+
+```go
+ctx = zax.Remove(ctx, "user_email", "api_token")
+```
+
+#### `GetSugared(ctx) []any`
 Returns fields as key-value pairs for `SugaredLogger`.
 
 ```go
@@ -205,23 +223,6 @@ sugar.With(zax.GetSugared(ctx)...).Info("sugared log")
 ```
 
 `GetSugared` converts fields through Zap's encoder so common field types like strings, bools, numbers, errors, durations, and times are preserved.
-
-## 📊 Benchmarks
-
-Run benchmarks with:
-
-```bash
-go test -bench . -run '^$' ./...
-```
-
-Example output on an Apple M2 Pro:
-
-```text
-BenchmarkLoggingWithOnlyZap-10    28372430    44.73 ns/op
-BenchmarkLoggingWithZax-10        10809844   118.1 ns/op
-```
-
-This keeps the package lightweight while adding a modest per-call cost for carrying context fields.
 
 ## 🔥 Real-World Example
 
@@ -299,36 +300,33 @@ func (s *Server) fetchUser(ctx context.Context) (*User, error) {
 
 Zax V2 is optimized for performance. Here's how it compares:
 
+Run benchmarks yourself with:
+
+```bash
+task bench
+# or
+go test -bench . -run '^$' -benchmem ./...
+```
+
 | Benchmark | ns/op | B/op | allocs/op |
 |-----------|-------|------|-----------|
-| **Pure Zap** | ~35 | 112 | 1 |
-| **Zax V2** | ~57 | 72 | 2 |
-| Zax V1 | ~65 | 160 | 2 |
+| **Pure Zap** | ~43 | 128 | 1 |
+| **Zax V2** | ~226 | 584 | 5 |
 
-> 💡 **V2 uses 55% less memory** than V1 by storing only fields instead of the entire logger object.
+> 💡 The extra allocations come from defensively cloning fields on `Set`/`Append`/`Get`
+> and from storing them in the context, so callers can never mutate fields after
+> they are stored. If you need the absolute minimum overhead, pass zap fields directly.
 
 <details>
 <summary>📋 Full Benchmark Results</summary>
 
+Measured on an Apple M2 Pro with Go 1.26 and zap v1.28.0:
+
 ```
 pkg: github.com/yuseferi/zax/v2
-BenchmarkLoggingWithOnlyZap-10          103801226               35.56 ns/op          112 B/op          1 allocs/op
-BenchmarkLoggingWithOnlyZap-10          98576570                35.56 ns/op          112 B/op          1 allocs/op
-BenchmarkLoggingWithOnlyZap-10          100000000               35.24 ns/op          112 B/op          1 allocs/op
-BenchmarkLoggingWithOnlyZap-10          100000000               34.85 ns/op          112 B/op          1 allocs/op
-BenchmarkLoggingWithOnlyZap-10          100000000               34.98 ns/op          112 B/op          1 allocs/op
-BenchmarkLoggingWithZaxV2-10            64324434                56.02 ns/op           72 B/op          2 allocs/op
-BenchmarkLoggingWithZaxV2-10            63939517                56.98 ns/op           72 B/op          2 allocs/op
-BenchmarkLoggingWithZaxV2-10            63374052                57.60 ns/op           72 B/op          2 allocs/op
-BenchmarkLoggingWithZaxV2-10            63417358                57.37 ns/op           72 B/op          2 allocs/op
-BenchmarkLoggingWithZaxV2-10            57964246                57.97 ns/op           72 B/op          2 allocs/op
-BenchmarkLoggingWithZaxV1-10            54062712                66.40 ns/op          160 B/op          2 allocs/op
-BenchmarkLoggingWithZaxV1-10            53155524                65.61 ns/op          160 B/op          2 allocs/op
-BenchmarkLoggingWithZaxV1-10            54428521                64.19 ns/op          160 B/op          2 allocs/op
-BenchmarkLoggingWithZaxV1-10            55420744                64.28 ns/op          160 B/op          2 allocs/op
-BenchmarkLoggingWithZaxV1-10            55199061                64.50 ns/op          160 B/op          2 allocs/op
+BenchmarkLoggingWithOnlyZap-10    84292609    43.15 ns/op    128 B/op    1 allocs/op
+BenchmarkLoggingWithZax-10        15688470   226.2 ns/op    584 B/op    5 allocs/op
 PASS
-ok      github.com/yuseferi/zax/v2      56.919s
 ```
 
 </details>
