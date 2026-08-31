@@ -322,7 +322,7 @@ go test -bench . -run '^$' -benchmem ./...
 
 Measured on an Apple M2 Pro with Go 1.26 and zap v1.28.0:
 
-```
+```text
 pkg: github.com/yuseferi/zax/v2
 BenchmarkLoggingWithOnlyZap-10    84292609    43.15 ns/op    128 B/op    1 allocs/op
 BenchmarkLoggingWithZax-10        15688470   226.2 ns/op    584 B/op    5 allocs/op

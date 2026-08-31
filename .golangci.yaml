@@ -11,12 +11,6 @@ output:
       print-issued-lines: true
       print-linter-name: true
 
-issues:
-  exclude-dirs:
-    - docs
-    - mocks
-    - scripts
-
 linters:
   default: none
   enable:
@@ -32,6 +26,11 @@ linters:
     - cyclop
     - lll
     - forbidigo
+  exclusions:
+    paths:
+      - docs
+      - mocks
+      - scripts
   settings:
     dupl:
       threshold: 250

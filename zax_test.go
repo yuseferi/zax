@@ -12,12 +12,14 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 )
 
+// Logger wraps an observer-backed zap logger for asserting on recorded log entries.
 type Logger struct {
 	logger   *zap.Logger
 	recorded *observer.ObservedLogs
 	t        *testing.T
 }
 
+// NewLogger creates a test logger that records all entries at DebugLevel and above.
 func NewLogger(t *testing.T) *Logger {
 	core, recorded := observer.New(zapcore.DebugLevel)
 	logger := &Logger{
@@ -28,14 +30,17 @@ func NewLogger(t *testing.T) *Logger {
 	return logger
 }
 
+// GetZapLogger returns the underlying zap logger.
 func (l *Logger) GetZapLogger() *zap.Logger {
 	return l.logger
 }
 
+// GetRecordedLogs returns all log entries recorded so far.
 func (l *Logger) GetRecordedLogs() []observer.LoggedEntry {
 	return l.recorded.All()
 }
 
+// AssertLogEntryExist fails the test unless a recorded field with the given key and string value exists.
 func (l *Logger) AssertLogEntryExist(t assert.TestingT, key, value string) bool {
 	for _, log := range l.recorded.All() {
 		for _, r := range log.Context {
@@ -50,6 +55,7 @@ func (l *Logger) AssertLogEntryExist(t assert.TestingT, key, value string) bool 
 	return assert.Fail(t, fmt.Sprintf("log entry does not exist with, %s = %s", key, value))
 }
 
+// AssertLogEntryKeyExist fails the test unless a recorded field with the given key exists.
 func (l *Logger) AssertLogEntryKeyExist(t assert.TestingT, key string) bool {
 	for _, log := range l.recorded.All() {
 		for _, r := range log.Context {
