@@ -18,16 +18,21 @@
 
 **Zax** seamlessly integrates [Zap Logger](https://github.com/uber-go/zap) with Go's `context.Context`, enabling you to carry structured logging fields across your entire request lifecycle without boilerplate.
 
-[Features](#-features) •
-[Installation](#-installation) •
-[Tasks](#-tasks) •
-[Releases](#-releases) •
-[Quick Start](#-quick-start) •
-[API Reference](#-api-reference) •
-[Benchmarks](#-benchmarks) •
-[Contributing](#-contributing)
-
 </div>
+
+## 📚 Table of Contents
+
+- [Why Zax?](#-why-zax)
+- [Features](#-features)
+- [Installation](#-installation)
+- [Tasks](#-tasks)
+- [Releases](#-releases)
+- [Quick Start](#-quick-start)
+- [API Reference](#-api-reference)
+- [Real-World Example](#-real-world-example)
+- [Benchmarks](#-benchmarks)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
