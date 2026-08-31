@@ -65,6 +65,7 @@ func StreamServerInterceptor(logger *zap.Logger, opts ...Option) grpc.StreamServ
 	}
 }
 
+// newConfig builds the interceptor configuration from defaults and options.
 func newConfig(opts []Option) *config {
 	cfg := &config{requestIDKeys: defaultRequestIDKeys}
 	for _, opt := range opts {
@@ -79,10 +80,12 @@ type wrappedStream struct {
 	ctx context.Context
 }
 
+// Context returns the zax-enriched context instead of the stream's original.
 func (w *wrappedStream) Context() context.Context {
 	return w.ctx
 }
 
+// buildFields assembles the zax fields describing an incoming RPC.
 func buildFields(ctx context.Context, fullMethod string, cfg *config) []zap.Field {
 	fields := []zap.Field{zap.String("grpc_method", fullMethod)}
 
@@ -94,6 +97,7 @@ func buildFields(ctx context.Context, fullMethod string, cfg *config) []zap.Fiel
 	return fields
 }
 
+// firstValue returns the first non-empty value found for the given keys.
 func firstValue(md metadata.MD, keys []string) string {
 	for _, key := range keys {
 		if values := md.Get(key); len(values) > 0 && values[0] != "" {
@@ -103,6 +107,7 @@ func firstValue(md metadata.MD, keys []string) string {
 	return ""
 }
 
+// logCompletion logs the RPC outcome, at Error level when the code is not OK.
 func logCompletion(logger *zap.Logger, ctx context.Context, err error, duration time.Duration) {
 	code := status.Code(err)
 	fields := append(zax.Get(ctx),

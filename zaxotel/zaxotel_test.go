@@ -17,6 +17,7 @@ const (
 	validSpanID  = "00f067aa0ba902b7"
 )
 
+// validSpanContext builds a sampled span context with well-known trace and span IDs.
 func validSpanContext() trace.SpanContext {
 	traceID, _ := trace.TraceIDFromHex(validTraceID)
 	spanID, _ := trace.SpanIDFromHex(validSpanID)
@@ -27,6 +28,8 @@ func validSpanContext() trace.SpanContext {
 	})
 }
 
+// TestFields verifies the trace fields produced for valid, missing, and
+// invalid span contexts.
 func TestFields(t *testing.T) {
 	t.Run("valid span context returns trace fields", func(t *testing.T) {
 		ctx := trace.ContextWithSpanContext(context.Background(), validSpanContext())
@@ -51,6 +54,8 @@ func TestFields(t *testing.T) {
 	})
 }
 
+// TestWithTrace verifies that trace fields are appended to the zax context
+// and reach the logger.
 func TestWithTrace(t *testing.T) {
 	t.Run("appends trace fields to zax context", func(t *testing.T) {
 		ctx := trace.ContextWithSpanContext(context.Background(), validSpanContext())

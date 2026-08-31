@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"io"
 	"net/http"
 	"time"
 
@@ -57,14 +58,15 @@ func Middleware(logger *zap.Logger, opts ...Option) func(http.Handler) http.Hand
 
 			logger.Debug("request started", zax.Get(ctx)...)
 
-			recorder := newStatusRecorder(w)
-			next.ServeHTTP(recorder, r)
+			writer, recorder := newStatusRecorder(w)
+			next.ServeHTTP(writer, r)
 
 			logCompletion(logger, ctx, recorder.status(), time.Since(start))
 		})
 	}
 }
 
+// newConfig builds the middleware configuration from defaults and options.
 func newConfig(opts []Option) *config {
 	cfg := &config{
 		requestIDHeader:    defaultRequestIDHeader,
@@ -76,6 +78,7 @@ func newConfig(opts []Option) *config {
 	return cfg
 }
 
+// buildFields assembles the zax fields describing an incoming request.
 func buildFields(r *http.Request, cfg *config) []zap.Field {
 	return []zap.Field{
 		zap.String("request_id", requestID(r, cfg)),
@@ -85,6 +88,7 @@ func buildFields(r *http.Request, cfg *config) []zap.Field {
 	}
 }
 
+// requestID returns the ID from the configured header, or generates one.
 func requestID(r *http.Request, cfg *config) string {
 	if id := r.Header.Get(cfg.requestIDHeader); id != "" {
 		return id
@@ -92,6 +96,7 @@ func requestID(r *http.Request, cfg *config) string {
 	return cfg.requestIDGenerator()
 }
 
+// defaultRequestID returns a random 16-byte hex string.
 func defaultRequestID() string {
 	b := make([]byte, 16)
 	// crypto/rand.Read only errors if the entropy source is unavailable;
@@ -100,31 +105,84 @@ func defaultRequestID() string {
 	return hex.EncodeToString(b)
 }
 
-// statusRecorder captures the response status code for completion logging.
+// statusRecorder captures the effective response status for completion logging.
+// Only the first written status counts, mirroring net/http behavior.
 type statusRecorder struct {
 	http.ResponseWriter
-	code int
+	code        int
+	wroteHeader bool
 }
 
-func newStatusRecorder(w http.ResponseWriter) *statusRecorder {
-	return &statusRecorder{ResponseWriter: w, code: http.StatusOK}
-}
+// newStatusRecorder wraps w so the effective status can be read after the
+// handler returns. The returned writer exposes the optional ResponseWriter
+// interfaces (http.Flusher, http.Hijacker, http.Pusher, io.ReaderFrom) only
+// when w itself supports them, so hijacking and streaming handlers keep working.
+func newStatusRecorder(w http.ResponseWriter) (http.ResponseWriter, *statusRecorder) {
+	recorder := &statusRecorder{ResponseWriter: w, code: http.StatusOK}
 
-func (r *statusRecorder) WriteHeader(code int) {
-	r.code = code
-	r.ResponseWriter.WriteHeader(code)
-}
+	_, isFlusher := w.(http.Flusher)
+	_, isHijacker := w.(http.Hijacker)
+	_, isPusher := w.(http.Pusher)
+	_, isReaderFrom := w.(io.ReaderFrom)
 
-func (r *statusRecorder) Flush() {
-	if flusher, ok := r.ResponseWriter.(http.Flusher); ok {
-		flusher.Flush()
+	switch {
+	case isFlusher && isHijacker && isReaderFrom: // standard HTTP/1 server writer
+		return &flusherHijackerReaderFromWriter{recorder, w.(http.Flusher), w.(http.Hijacker), w.(io.ReaderFrom)}, recorder
+	case isFlusher && isPusher: // standard HTTP/2 server writer
+		return &flusherPusherWriter{recorder, w.(http.Flusher), w.(http.Pusher)}, recorder
+	case isFlusher:
+		return &flusherWriter{recorder, w.(http.Flusher)}, recorder
+	default:
+		return recorder, recorder
 	}
 }
 
+// WriteHeader records the first status and delegates to the wrapped writer.
+// Later calls are ignored, matching net/http behavior.
+func (r *statusRecorder) WriteHeader(code int) {
+	if r.wroteHeader {
+		return
+	}
+	r.code = code
+	r.wroteHeader = true
+	r.ResponseWriter.WriteHeader(code)
+}
+
+// Write records an implicit 200 if no status was written yet, then delegates.
+func (r *statusRecorder) Write(p []byte) (int, error) {
+	if !r.wroteHeader {
+		r.WriteHeader(http.StatusOK)
+	}
+	return r.ResponseWriter.Write(p)
+}
+
+// status returns the effective response status recorded so far.
 func (r *statusRecorder) status() int {
 	return r.code
 }
 
+// flusherWriter adds http.Flusher support on top of the status recorder.
+type flusherWriter struct {
+	*statusRecorder
+	http.Flusher
+}
+
+// flusherHijackerReaderFromWriter mirrors the standard net/http HTTP/1 writer.
+type flusherHijackerReaderFromWriter struct {
+	*statusRecorder
+	http.Flusher
+	http.Hijacker
+	io.ReaderFrom
+}
+
+// flusherPusherWriter mirrors the standard net/http HTTP/2 writer.
+type flusherPusherWriter struct {
+	*statusRecorder
+	http.Flusher
+	http.Pusher
+}
+
+// logCompletion logs the request outcome, choosing the level from the status.
 func logCompletion(logger *zap.Logger, ctx context.Context, code int, duration time.Duration) {
 	fields := append(zax.Get(ctx), zap.Int("status", code), zap.Duration("duration", duration))
 

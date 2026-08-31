@@ -1,6 +1,9 @@
 package zaxhttp
 
 import (
+	"bufio"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,11 +15,13 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 )
 
+// newTestLogger returns an observer-backed logger and its recorded logs.
 func newTestLogger() (*zap.Logger, *observer.ObservedLogs) {
 	core, recorded := observer.New(zapcore.DebugLevel)
 	return zap.New(core), recorded
 }
 
+// doRequest sends a GET /hello request through the given middleware and handler.
 func doRequest(t *testing.T, middleware func(http.Handler) http.Handler, handler http.HandlerFunc) {
 	t.Helper()
 	server := httptest.NewServer(middleware(handler))
@@ -27,6 +32,8 @@ func doRequest(t *testing.T, middleware func(http.Handler) http.Handler, handler
 	assert.NoError(t, resp.Body.Close())
 }
 
+// seenRequestID runs one request through the middleware and returns the
+// request_id field visible to the handler.
 func seenRequestID(t *testing.T, middleware func(http.Handler) http.Handler, req *http.Request) string {
 	t.Helper()
 	var seen string
@@ -36,6 +43,8 @@ func seenRequestID(t *testing.T, middleware func(http.Handler) http.Handler, req
 	return seen
 }
 
+// TestMiddlewareUsesIncomingRequestID verifies that an incoming X-Request-ID
+// header is propagated to the handler context.
 func TestMiddlewareUsesIncomingRequestID(t *testing.T) {
 	logger, _ := newTestLogger()
 	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
@@ -44,6 +53,8 @@ func TestMiddlewareUsesIncomingRequestID(t *testing.T) {
 	assert.Equal(t, "abc-123", seenRequestID(t, Middleware(logger), req))
 }
 
+// TestMiddlewareRespectsCustomHeader verifies that WithRequestIDHeader
+// changes which header carries the request ID.
 func TestMiddlewareRespectsCustomHeader(t *testing.T) {
 	logger, _ := newTestLogger()
 	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
@@ -54,6 +65,8 @@ func TestMiddlewareRespectsCustomHeader(t *testing.T) {
 	assert.Equal(t, "trace-9", seenRequestID(t, middleware, req))
 }
 
+// TestMiddlewareGeneratesRequestID verifies that the configured generator is
+// used when the request carries no ID header.
 func TestMiddlewareGeneratesRequestID(t *testing.T) {
 	logger, _ := newTestLogger()
 	middleware := Middleware(logger, WithRequestIDGenerator(func() string { return "gen-42" }))
@@ -61,11 +74,15 @@ func TestMiddlewareGeneratesRequestID(t *testing.T) {
 	assert.Equal(t, "gen-42", seenRequestID(t, middleware, httptest.NewRequest(http.MethodGet, "/hello", nil)))
 }
 
+// TestDefaultRequestIDGenerator verifies that default IDs are 32 hex chars
+// and unique across calls.
 func TestDefaultRequestIDGenerator(t *testing.T) {
 	assert.Len(t, defaultRequestID(), 32)
 	assert.NotEqual(t, defaultRequestID(), defaultRequestID())
 }
 
+// TestMiddlewareLogsStartAndCompletion verifies the start and completion log
+// entries, their levels, and the fields they carry.
 func TestMiddlewareLogsStartAndCompletion(t *testing.T) {
 	logger, recorded := newTestLogger()
 	doRequest(t, Middleware(logger), func(w http.ResponseWriter, _ *http.Request) {
@@ -86,6 +103,7 @@ func TestMiddlewareLogsStartAndCompletion(t *testing.T) {
 	assert.True(t, hasKeys(fields, "duration", "request_id"))
 }
 
+// TestMiddlewareLogsErrorFor5xx verifies that 5xx responses log at Error level.
 func TestMiddlewareLogsErrorFor5xx(t *testing.T) {
 	logger, recorded := newTestLogger()
 	doRequest(t, Middleware(logger), func(w http.ResponseWriter, _ *http.Request) {
@@ -97,6 +115,7 @@ func TestMiddlewareLogsErrorFor5xx(t *testing.T) {
 	assert.Contains(t, completed.Context, zap.Int("status", http.StatusInternalServerError))
 }
 
+// TestMiddlewareLogsWarnFor4xx verifies that 4xx responses log at Warn level.
 func TestMiddlewareLogsWarnFor4xx(t *testing.T) {
 	logger, recorded := newTestLogger()
 	doRequest(t, Middleware(logger), func(w http.ResponseWriter, _ *http.Request) {
@@ -106,6 +125,8 @@ func TestMiddlewareLogsWarnFor4xx(t *testing.T) {
 	assert.Equal(t, zapcore.WarnLevel, recorded.All()[1].Level)
 }
 
+// TestMiddlewarePreservesExistingFields verifies that zax fields set upstream
+// survive middleware enrichment.
 func TestMiddlewarePreservesExistingFields(t *testing.T) {
 	logger, _ := newTestLogger()
 	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
@@ -119,6 +140,8 @@ func TestMiddlewarePreservesExistingFields(t *testing.T) {
 	assert.Equal(t, "t-1", seen)
 }
 
+// TestStatusRecorderDefaultsTo200 verifies the implicit 200 when the handler
+// writes a body without an explicit status.
 func TestStatusRecorderDefaultsTo200(t *testing.T) {
 	rec := httptest.NewRecorder()
 	logger, _ := newTestLogger()
@@ -130,24 +153,132 @@ func TestStatusRecorderDefaultsTo200(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
-func TestStatusRecorderFlushPassthrough(t *testing.T) {
-	recorder := newStatusRecorder(httptest.NewRecorder())
+// TestStatusRecorderRecordsExplicitStatus verifies that an explicit
+// WriteHeader call is recorded.
+func TestStatusRecorderRecordsExplicitStatus(t *testing.T) {
+	writer, recorder := newStatusRecorder(httptest.NewRecorder())
 
-	flusher, ok := any(recorder).(http.Flusher)
-	assert.True(t, ok)
-	flusher.Flush() // must not panic even though httptest.ResponseRecorder flushes
+	writer.WriteHeader(http.StatusTeapot)
+
+	assert.Equal(t, http.StatusTeapot, recorder.status())
 }
 
-func TestStatusRecorderRecordsExplicitStatus(t *testing.T) {
+// TestStatusRecorderKeepsFirstStatus verifies that only the first written
+// status counts, mirroring net/http behavior.
+func TestStatusRecorderKeepsFirstStatus(t *testing.T) {
 	rec := httptest.NewRecorder()
-	recorder := newStatusRecorder(rec)
+	writer, recorder := newStatusRecorder(rec)
 
-	recorder.WriteHeader(http.StatusTeapot)
+	writer.WriteHeader(http.StatusTeapot)
+	writer.WriteHeader(http.StatusInternalServerError)
 
 	assert.Equal(t, http.StatusTeapot, recorder.status())
 	assert.Equal(t, http.StatusTeapot, rec.Code)
 }
 
+// TestStatusRecorderRecordsImplicit200OnWrite verifies that Write without a
+// prior WriteHeader records an implicit 200.
+func TestStatusRecorderRecordsImplicit200OnWrite(t *testing.T) {
+	writer, recorder := newStatusRecorder(httptest.NewRecorder())
+
+	n, err := writer.Write([]byte("ok"))
+
+	assert.NoError(t, err)
+	assert.Len(t, "ok", n)
+	assert.Equal(t, http.StatusOK, recorder.status())
+}
+
+// TestStatusRecorderExposesSupportedInterfaces verifies that the wrapper
+// exposes exactly the interfaces the wrapped writer supports.
+func TestStatusRecorderExposesSupportedInterfaces(t *testing.T) {
+	// httptest.ResponseRecorder implements http.Flusher only.
+	writer, _ := newStatusRecorder(httptest.NewRecorder())
+
+	assert.Implements(t, (*http.Flusher)(nil), writer)
+	assert.NotImplements(t, (*http.Hijacker)(nil), writer)
+	assert.NotImplements(t, (*http.Pusher)(nil), writer)
+	assert.NotImplements(t, (*io.ReaderFrom)(nil), writer)
+}
+
+// TestStatusRecorderHidesInterfacesWhenUnsupported verifies that no optional
+// interface is advertised when the wrapped writer supports none.
+func TestStatusRecorderHidesInterfacesWhenUnsupported(t *testing.T) {
+	writer, _ := newStatusRecorder(&bareWriter{})
+
+	assert.NotImplements(t, (*http.Flusher)(nil), writer)
+	assert.NotImplements(t, (*http.Hijacker)(nil), writer)
+	assert.NotImplements(t, (*http.Pusher)(nil), writer)
+	assert.NotImplements(t, (*io.ReaderFrom)(nil), writer)
+}
+
+// TestStatusRecorderExposesHTTP1Capabilities verifies Flusher, Hijacker, and
+// ReaderFrom are exposed for a standard HTTP/1 writer.
+func TestStatusRecorderExposesHTTP1Capabilities(t *testing.T) {
+	writer, _ := newStatusRecorder(&http1Writer{})
+
+	assert.Implements(t, (*http.Flusher)(nil), writer)
+	assert.Implements(t, (*http.Hijacker)(nil), writer)
+	assert.Implements(t, (*io.ReaderFrom)(nil), writer)
+	assert.NotImplements(t, (*http.Pusher)(nil), writer)
+}
+
+// TestStatusRecorderExposesHTTP2Capabilities verifies Flusher and Pusher are
+// exposed for a standard HTTP/2 writer.
+func TestStatusRecorderExposesHTTP2Capabilities(t *testing.T) {
+	writer, _ := newStatusRecorder(&http2Writer{})
+
+	assert.Implements(t, (*http.Flusher)(nil), writer)
+	assert.Implements(t, (*http.Pusher)(nil), writer)
+	assert.NotImplements(t, (*http.Hijacker)(nil), writer)
+	assert.NotImplements(t, (*io.ReaderFrom)(nil), writer)
+}
+
+// TestStatusRecorderFlushPassthrough verifies Flush reaches the wrapped writer.
+func TestStatusRecorderFlushPassthrough(t *testing.T) {
+	writer, _ := newStatusRecorder(httptest.NewRecorder())
+
+	flusher, ok := writer.(http.Flusher)
+	assert.True(t, ok)
+	flusher.Flush() // must not panic
+}
+
+// bareWriter supports none of the optional ResponseWriter interfaces.
+type bareWriter struct {
+	http.ResponseWriter
+}
+
+// http1Writer mimics the standard net/http HTTP/1 server writer.
+type http1Writer struct {
+	http.ResponseWriter
+}
+
+// Flush is a no-op so http1Writer implements http.Flusher.
+func (f *http1Writer) Flush() {}
+
+// Hijack is a no-op so http1Writer implements http.Hijacker.
+func (f *http1Writer) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return nil, nil, nil
+}
+
+// ReadFrom is a no-op so http1Writer implements io.ReaderFrom.
+func (f *http1Writer) ReadFrom(io.Reader) (int64, error) {
+	return 0, nil
+}
+
+// http2Writer mimics the standard net/http HTTP/2 server writer.
+type http2Writer struct {
+	http.ResponseWriter
+}
+
+// Flush is a no-op so http2Writer implements http.Flusher.
+func (f *http2Writer) Flush() {}
+
+// Push is a no-op so http2Writer implements http.Pusher.
+func (f *http2Writer) Push(string, *http.PushOptions) error {
+	return nil
+}
+
+// hasKeys reports whether all given keys appear in the field list.
 func hasKeys(fields []zap.Field, keys ...string) bool {
 	for _, key := range keys {
 		found := false
