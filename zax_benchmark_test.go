@@ -14,10 +14,12 @@ var someFields = []zap.Field{
 	zap.Int("field3", 2),
 }
 
+// LogWithZap logs directly with zap fields, as a baseline for the benchmark.
 func LogWithZap(logger *zap.Logger) {
 	logger.With(someFields...).Info("logging something")
 }
 
+// LogWithZax logs with fields carried in context via zax Set/Get.
 func LogWithZax(logger *zap.Logger) {
 	ctx := context.Background()
 	ctx = Set(ctx, someFields)
@@ -31,7 +33,7 @@ func BenchmarkLoggingWithOnlyZap(b *testing.B) {
 		return zapcore.NewNopCore()
 	}))
 
-	for i := 1; i <= b.N; i++ {
+	for b.Loop() {
 		LogWithZap(logger)
 	}
 }
@@ -43,7 +45,7 @@ func BenchmarkLoggingWithZax(b *testing.B) {
 		return zapcore.NewNopCore()
 	}))
 
-	for i := 1; i <= b.N; i++ {
+	for b.Loop() {
 		LogWithZax(logger)
 	}
 }
