@@ -29,6 +29,7 @@
 - [Releases](#-releases)
 - [Quick Start](#-quick-start)
 - [API Reference](#-api-reference)
+- [Integrations](#-integrations)
 - [Real-World Example](#-real-world-example)
 - [Benchmarks](#-benchmarks)
 - [Contributing](#-contributing)
@@ -51,10 +52,11 @@ Zax solves these problems elegantly by storing Zap fields in context, making the
 
 | Feature | Description |
 |---------|-------------|
-| 🚀 **Zero Dependencies** | Only requires `go.uber.org/zap` |
+| 🚀 **Zero Dependencies** | The core package only requires `go.uber.org/zap` |
 | 🎯 **Context-Native** | Works seamlessly with Go's `context.Context` |
 | ⚡ **High Performance** | Minimal, predictable overhead (see [Benchmarks](#-benchmarks)) |
 | 🔧 **Simple API** | Just 7 functions to learn |
+| 🔌 **First-Party Integrations** | HTTP middleware, gRPC interceptors, and OpenTelemetry trace correlation (see [Integrations](#-integrations)) |
 | 🍬 **SugaredLogger Support** | Works with both `*zap.Logger` and `*zap.SugaredLogger` |
 | 🧪 **Well Tested** | Comprehensive test coverage |
 
@@ -228,6 +230,54 @@ sugar.With(zax.GetSugared(ctx)...).Info("sugared log")
 ```
 
 `GetSugared` converts fields through Zap's encoder so common field types like strings, bools, numbers, errors, durations, and times are preserved.
+
+## 🔌 Integrations
+
+First-party integrations live in sub-packages of the same module, so you can adopt them with one line each.
+
+### HTTP Middleware (`zaxhttp`)
+
+Enriches every request with `request_id`, `method`, `path`, and `remote_addr` fields, and logs request start (Debug) and completion (Info/Warn/Error by status) with those fields.
+
+```go
+import "github.com/yuseferi/zax/v2/zaxhttp"
+
+mux.Use(zaxhttp.Middleware(logger))
+
+// Optional: customize request ID propagation
+mux.Use(zaxhttp.Middleware(logger,
+    zaxhttp.WithRequestIDHeader("X-Trace-ID"),
+    zaxhttp.WithRequestIDGenerator(myGenerator),
+))
+```
+
+The request ID is read from the `X-Request-ID` header (configurable) or generated (16 random hex bytes by default). Handlers see the enriched context through `r.Context()`.
+
+### gRPC Interceptors (`zaxgrpc`)
+
+Unary and stream server interceptors that pull a request ID from incoming metadata (`x-request-id` or `request-id`, configurable) and log each RPC with `grpc_method`, `grpc_code`, and `duration`.
+
+```go
+import "github.com/yuseferi/zax/v2/zaxgrpc"
+
+server := grpc.NewServer(
+    grpc.UnaryInterceptor(zaxgrpc.UnaryServerInterceptor(logger)),
+    grpc.StreamInterceptor(zaxgrpc.StreamServerInterceptor(logger)),
+)
+```
+
+### OpenTelemetry Trace Correlation (`zaxotel`)
+
+Adds the active span's `trace_id`, `span_id`, and `sampled` flag to your zax fields, so logs link straight to traces. Only `go.opentelemetry.io/otel/trace` is required — no SDK dependency.
+
+```go
+import "github.com/yuseferi/zax/v2/zaxotel"
+
+ctx = zaxotel.WithTrace(ctx)
+
+// Or get the fields directly
+logger.Info("processed", append(zax.Get(ctx), zaxotel.Fields(ctx)...)...)
+```
 
 ## 🔥 Real-World Example
 
